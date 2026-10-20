@@ -31,15 +31,24 @@ test('desktop: the time list scrolls inside the card; keyboard focus is always v
 
   // Keyboard: End, then Home; the focused time is fully inside the visible list each time.
   await page.locator('button.slot').first().focus();
+  const slots = page.locator('button.slot');
   for (const key of ['End', 'Home', 'End']) {
     await page.keyboard.press(key);
-    const visible = await page.evaluate(() => {
-      const el = document.activeElement as HTMLElement;
-      const box = document.querySelector('.slots-scroll')!.getBoundingClientRect();
-      const r = el.getBoundingClientRect();
-      return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5;
-    });
-    expect(visible, `focused time visible after ${key}`).toBe(true);
+    await expect(key === 'End' ? slots.last() : slots.first()).toBeFocused();
+    // WebKit can scroll focus into view on the next rendering update rather than within the key
+    // press, so wait for it; a time that never comes into view still fails.
+    await expect
+      .poll(
+        () =>
+          page.evaluate(() => {
+            const el = document.activeElement as HTMLElement;
+            const box = document.querySelector('.slots-scroll')!.getBoundingClientRect();
+            const r = el.getBoundingClientRect();
+            return r.top >= box.top - 0.5 && r.bottom <= box.bottom + 0.5;
+          }),
+        { message: `focused time visible after ${key}`, timeout: 2_000 },
+      )
+      .toBe(true);
   }
 
   // Scrolled to the end, the last time sits fully inside the card, with room below it.
