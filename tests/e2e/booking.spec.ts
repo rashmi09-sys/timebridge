@@ -693,6 +693,32 @@ test.describe('non-text contrast of control edges (WCAG 1.4.11), measured on scr
       }
     });
   }
+  for (const scheme of ['light', 'dark'] as const) {
+    test(`${scheme}: today's dot reaches 3:1 when today has no times, is selected, or is available`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      const today = page.locator('button.day[data-today]');
+      const check = async (label: string) => {
+        await transitionsDone(page);
+        const [dot, fill] = await today.evaluate((el) => [
+          getComputedStyle(el, '::after').backgroundColor,
+          getComputedStyle(el).backgroundColor,
+        ]);
+        const behind = fill === 'rgba(0, 0, 0, 0)' ? await cardBg(page) : fill;
+        expect(await ratio(page, dot, behind), label).toBeGreaterThanOrEqual(3);
+      };
+      await page.goto(`/?tz=Asia/Kolkata&now=${NOW}`); // 9:00 PM in India: today's times are past the notice period
+      await ready(page);
+      await expect(today).not.toHaveAttribute('data-available', /.*/);
+      await check('today, no times');
+      await page.goto(la);
+      await ready(page);
+      await expect(today).toHaveAttribute('data-selected');
+      await check('today, selected');
+      await page.getByRole('button', { name: /Wednesday, October 14, 2026, \d+ times available/ }).click();
+      await expect(today).not.toHaveAttribute('data-selected', /.*/);
+      await check('today, available');
+    });
+  }
 });
 
 test.describe('booking journey', () => {
@@ -1375,6 +1401,8 @@ test.describe('site frame and controls', () => {
     await trigger.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('menuitemradio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+    // The menu takes keys once focus is on its item (WebKit can move it a frame after opening).
+    await expect(page.getByRole('menuitemradio', { name: 'System' })).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
