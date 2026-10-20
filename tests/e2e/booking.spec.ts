@@ -8,7 +8,25 @@ async function ready(page: Page) {
   await expect(page.locator('button.day[data-available]').first()).toBeVisible();
 }
 
+/**
+ * Waits for running CSS transitions (theme colours, popup motion) to finish. Two frames first,
+ * because a transition only starts on the frame after the change that triggers it.
+ */
+async function transitionsDone(page: Page) {
+  await page.evaluate(async () => {
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => a instanceof CSSTransition)
+        .map((a) => a.finished.catch(() => undefined)),
+    );
+  });
+}
+
+/** Checks the page as people see it: after colour transitions (e.g. from a theme change) have finished. */
 async function axe(page: Page, label: string) {
+  await transitionsDone(page);
   // axe-core bundles its own playwright-core types; the runtime page is the same object.
   const results = await new AxeBuilder({ page } as unknown as ConstructorParameters<typeof AxeBuilder>[0])
     .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
@@ -28,12 +46,29 @@ async function settled(page: Page) {
   });
 }
 
+/**
+ * Waits until a popup has finished its entry motion (it starts at scale 0.98, 2px up), so its
+ * geometry is final. "No running animations" alone is not enough: WebKit reports none in the
+ * frame before the transition starts.
+ */
+async function popupSettled(page: Page, selector: string) {
+  await page.waitForFunction((sel) => {
+    const el = document.querySelector(sel);
+    return (
+      !!el &&
+      !el.hasAttribute('data-starting-style') &&
+      el.getAnimations().length === 0 &&
+      getComputedStyle(el).transform === 'none'
+    );
+  }, selector);
+}
+
 /** Chooses an option in one of the Demo settings selects (its popup is portalled, so look it up on the page). */
 async function pick(page: Page, label: string, option: string) {
   await settled(page); // the phone sheet slides in; don't tap a moving target
   await page.getByRole('combobox', { name: label }).click();
   await expect(page.getByRole('listbox')).toBeVisible();
-  await page.waitForFunction(() => document.querySelector('.select-popup')?.getAnimations().length === 0);
+  await popupSettled(page, '.select-popup');
   await page.getByRole('option', { name: option, exact: true }).click();
   await expect(page.getByRole('listbox')).toHaveCount(0);
   await expect(page.getByRole('combobox', { name: label })).toHaveText(option);
@@ -204,6 +239,31 @@ test.describe('time list focus (regression: stale tab stop after changing dates)
     await page.keyboard.press('Enter');
     await expect(page.locator(':focus')).toHaveAttribute('aria-label', /^12:00 AM your time/);
     await expect(page.locator('button.slot[tabindex="0"]')).toHaveCount(1);
+  });
+
+  // Regression (Safari): after a mouse click, WebKit stopped matching :focus-visible on focus
+  // moved by script, even when a key press moved it, so arrowing left no visible focus.
+  test('after a mouse click, focus moved by keys still shows the focus ring', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Keyboard behaviour');
+    await page.goto(la);
+    await ready(page);
+    const oct14 = page.getByRole('button', { name: /Wednesday, October 14, 2026, \d+ times available/ });
+    await oct14.click();
+    await oct14.focus(); // Safari doesn't focus buttons on click; make the starting point the same everywhere
+    const focused = page.locator(':focus');
+    const ringShown = () => focused.evaluate((el) => el.matches(':focus-visible') && getComputedStyle(el).outlineStyle !== 'none');
+
+    await page.keyboard.press('ArrowRight');
+    await expect(focused).toHaveAttribute('data-key', '2026-10-15');
+    expect(await ringShown()).toBe(true);
+
+    await page.keyboard.press('Enter');
+    await expect(focused).toHaveAttribute('aria-label', /^12:00 AM your time/);
+    expect(await ringShown()).toBe(true);
+
+    await page.keyboard.press('ArrowDown');
+    await expect(focused).toHaveAttribute('aria-label', /^12:15 AM your time/);
+    expect(await ringShown()).toBe(true);
   });
 
   test('after Back, the chosen time is the tab stop and is marked as current', async ({ page, isMobile }) => {
@@ -1004,7 +1064,12 @@ test.describe('demo settings popover', () => {
       // A popover, not a modal: the page stays put and is not made inert.
       await expect(panel).not.toHaveAttribute('aria-modal', 'true');
       expect(await page.locator('main').evaluate((m) => !!m.closest('[inert],[aria-hidden="true"]'))).toBe(false);
-      expect(await cardRect()).toEqual(cardBefore);
+      // Unmoved to within 0.005px: well under Firefox's 1/60px layout unit, so any real shift fails,
+      // but float noise from adding the scroll offset (72.04998779 vs 72.05000305) does not.
+      const cardAfter = await cardRect();
+      for (const key of ['top', 'left', 'width', 'height'] as const) {
+        expect(cardAfter[key], `card ${key}`).toBeCloseTo(cardBefore[key], 2);
+      }
       expect(await panel.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/^rgb\(/); // opaque, no alpha
     });
   }
@@ -1025,6 +1090,8 @@ test.describe('demo settings popover', () => {
     const listbox = page.getByRole('listbox');
     await expect(listbox).toBeVisible();
     await expect(page.getByRole('option', { name: 'Los Angeles' })).toHaveAttribute('data-highlighted', '');
+    // The list takes keys once focus is on the highlighted option (WebKit moves it a frame later).
+    await expect(page.getByRole('option', { name: 'Los Angeles' })).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await expect(page.getByRole('option', { name: 'London' })).toHaveAttribute('data-highlighted', '');
@@ -1044,6 +1111,7 @@ test.describe('demo settings popover', () => {
     await page.keyboard.press('ArrowDown');
     await expect(listbox).toBeVisible(); // wait for the list before moving through it
     await expect(page.getByRole('option', { name: 'Normal' })).toHaveAttribute('data-highlighted', '');
+    await expect(page.getByRole('option', { name: 'Normal' })).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await expect(page.getByRole('option', { name: 'Slow responses' })).toHaveAttribute('data-highlighted', '');
     await page.keyboard.press('Enter');
@@ -1086,7 +1154,7 @@ test.describe('demo settings popover', () => {
       await select.click();
       const list = page.locator('.select-popup');
       await expect(list).toBeVisible();
-      await page.waitForFunction(() => document.querySelector('.select-popup')!.getAnimations().length === 0);
+      await popupSettled(page, '.select-popup');
       const s = (await select.boundingBox())!;
       const l = (await list.boundingBox())!;
       expect(Math.abs(l.width - s.width)).toBeLessThanOrEqual(1);
@@ -1153,7 +1221,7 @@ test.describe('demo settings popover', () => {
     expect(l.y).toBeGreaterThanOrEqual(0);
     expect(l.y + l.height).toBeLessThanOrEqual(vp.height);
     // Don't tap an option while the popup is still moving into place.
-    await page.waitForFunction(() => document.querySelector('.select-popup')?.getAnimations().length === 0);
+    await popupSettled(page, '.select-popup');
     await page.getByRole('option', { name: 'Slow responses' }).click();
     await expect(panel).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'Network simulation' })).toHaveText('Slow responses');
@@ -1195,7 +1263,7 @@ test.describe('demo settings popover', () => {
     await trigger.click();
     const menu = page.locator('.menu-popup');
     await expect(menu).toBeVisible();
-    await page.waitForFunction(() => document.querySelector('.menu-popup')!.getAnimations().length === 0);
+    await popupSettled(page, '.menu-popup');
     const t = (await trigger.boundingBox())!;
     const m = (await menu.boundingBox())!;
     const vp = page.viewportSize()!;
