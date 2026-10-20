@@ -4,11 +4,21 @@ TimeBridge aims at WCAG 2.2 AA. This page separates what automated tests check f
 
 ## Checked automatically
 
-These run in CI; locally they have been run in Chromium only (see the README for exact results).
+These run in CI in five Playwright projects, all passing in [run 39385853563](https://github.com/rashmi09-sys/timebridge/actions/runs/39385853563) (2026-10-20, Playwright 1.56):
+
+| Project | Engine | Result |
+|---|---|---|
+| desktop-chromium | Chromium 141 | 104 passed, 0 failed, 1 skipped |
+| desktop-firefox | Firefox 142 | 104 passed, 0 failed, 1 skipped |
+| desktop-webkit | WebKit 26 | 104 passed, 0 failed, 1 skipped |
+| mobile-chromium | Chromium 141, emulating a Pixel 7 | 84 passed, 0 failed, 21 skipped |
+| mobile-webkit | WebKit 26, emulating an iPhone 13 | 84 passed, 0 failed, 21 skipped |
+
+These are Playwright's own Linux builds of each engine, not the browsers people install. The two phone projects are **simulated**: they set the screen size, touch support and user agent on a desktop engine. They are not tests on real phones (see [Other known limitations](#other-known-limitations)).
 
 - **axe-core** (WCAG 2.0, 2.1 and 2.2 A + AA rules): zero violations across the calendar, theme menu, Demo settings with a select open, time comparison, open zone list, form errors, confirmation, the open clock-change detail and the error-recovery screen, in light and dark themes.
 - **Text contrast (1.4.3)** and **non-text contrast (1.4.11)**: design-token pairs are unit-tested with the WCAG formula (`tests/unit/contrast.test.ts`). The rendered edges of the text fields, both selects, the switch track and thumb, and the selected 12h/24h segment are measured in the browser in both themes and must reach 3:1 against what is next to them.
-- **Keyboard:** a full booking by keyboard only; the calendar grid (arrows, Home/End, PageUp/PageDown); the time list's single tab stop; focus after each step change, after *Back*, after a conflict and after a crash; Escape order in nested popups; focus return.
+- **Keyboard:** a full booking by keyboard only; a visible focus ring when keys move focus, including after a mouse click; the calendar grid (arrows, Home/End, PageUp/PageDown); the time list's single tab stop; focus after each step change, after *Back*, after a conflict and after a crash; Escape order in nested popups; focus return.
 - **Reflow and targets:** no horizontal scroll from 1440 px down to 375 px; 24 px minimum targets; reduced motion.
 - **Scrolling:** on desktop the time list scrolls inside the card; focus moved with End/Home stays fully in view, and the wheel scrolls the list, not the page. On phones and at 640 px (200% zoom) there is no nested scroll area.
 - **Repeated clock times:** when clocks go back, two different instants never share a visible or spoken label: the visible time carries “Before clocks change” or “After clocks change”, and the spoken name adds the UTC offset (“1:15 AM your time, after clocks change, UTC minus 8”). Arrow keys reach both in time order, and *Back* restores the one that was chosen. The explanation line is plain text above the list (described-by on the list) and is added once to the date announcement; it is not a live region.
@@ -63,8 +73,9 @@ Time buttons and calendar days keep lighter borders and fills. They are identifi
 
 ## Other known limitations
 
-- **Real devices:** not tested. Phone layouts are tested in an emulated Pixel 7 (Chromium); the iPhone 13 (WebKit) profile is configured but has not run yet.
+- **Real devices:** not tested. Phone layouts are checked only in simulated phones: a Pixel 7 profile in Chromium and an iPhone 13 profile in WebKit. That covers screen size, touch events and layout, but not Chrome on Android, Safari on iOS, real touch input, on-screen keyboards, or TalkBack and VoiceOver.
 - **Text spacing (1.4.12) and browser text-only zoom:** not tested automatically.
 - **Windows High Contrast / forced colours:** CSS rules exist but are unverified.
 - **Locale:** dates and times follow the browser's locale (tested in en-US, en-GB and ja-JP). Interface copy and zone names are English only, and weeks start on Sunday in every locale.
-- **Browsers:** the test suite is configured for Chromium, Firefox and WebKit, but only Chromium has run it so far.
+- **Browsers:** the suite passes in Playwright's Chromium, Firefox and WebKit builds on Linux. WebKit on Linux is not Safari, so Safari on macOS and iOS has not been tested, nor have Chrome, Firefox or Edge on Windows and macOS.
+- **Focus ring in older Safari:** keyboard moves in the calendar and time list call `focus({ focusVisible: true })`, supported from Safari 18.4, Firefox 104 and Chrome 145. Safari before 18.4 ignores it, so after a mouse click, arrowing through dates or times there may show no focus ring. Chrome before 145 shows the ring through its own rules (tested in Chromium 141).
