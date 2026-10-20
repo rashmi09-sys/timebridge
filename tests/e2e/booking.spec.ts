@@ -1064,7 +1064,12 @@ test.describe('demo settings popover', () => {
       // A popover, not a modal: the page stays put and is not made inert.
       await expect(panel).not.toHaveAttribute('aria-modal', 'true');
       expect(await page.locator('main').evaluate((m) => !!m.closest('[inert],[aria-hidden="true"]'))).toBe(false);
-      expect(await cardRect()).toEqual(cardBefore);
+      // Unmoved to within 0.005px: well under Firefox's 1/60px layout unit, so any real shift fails,
+      // but float noise from adding the scroll offset (72.04998779 vs 72.05000305) does not.
+      const cardAfter = await cardRect();
+      for (const key of ['top', 'left', 'width', 'height'] as const) {
+        expect(cardAfter[key], `card ${key}`).toBeCloseTo(cardBefore[key], 2);
+      }
       expect(await panel.evaluate((el) => getComputedStyle(el).backgroundColor)).toMatch(/^rgb\(/); // opaque, no alpha
     });
   }
