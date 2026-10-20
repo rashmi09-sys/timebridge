@@ -1,0 +1,89 @@
+/* ------------------------------------------------------------------ */
+/* Tokens — neutral, borders over shadows, black as the only accent.  */
+/* ------------------------------------------------------------------ */
+:root {
+  color-scheme: light;
+  --page: #f4f4f5;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  /* Edges that identify a control (inputs, selects, switch track): ≥ 3:1 against the card (WCAG 1.4.11). */
+  --control-border: #848993;
+  --tile: #f0f0f2;
+  --tile-hover: #e4e4e7;
+  --text-emphasis: #111111;
+  --text: #374151;
+  --text-muted: #5f6672;
+  --text-disabled: #9ca3af;
+  --inverted: #ffffff;
+  --focus: #111111;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+  --notice-bg: #fffaeb;
+  --notice-border: #fedf89;
+  --notice-text: #7a2e0e;
+  --shadow-pop: 0 12px 32px -8px rgb(0 0 0 / 0.16), 0 2px 6px rgb(0 0 0 / 0.06);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --font: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Cal Sans', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+
+  /* Floating layer (menus, selects, popovers, sheet). Colours follow the theme tokens above. */
+  --popup-surface: var(--card);
+  --popup-border: var(--border);
+  --popup-radius: 10px;
+  --popup-shadow: var(--shadow-pop);
+  --popup-item-height: 36px;
+  --popup-item-padding-x: 10px;
+  --popup-item-radius: 6px;
+  --popup-motion: 140ms var(--ease);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --page: #0b0b0c;
+    --card: #161617;
+    --border: #2a2a2d;
+    --border-strong: #3a3a3e;
+  --control-border: #74747c;
+    --tile: #232326;
+    --tile-hover: #2e2e32;
+    --text-emphasis: #fafafa;
+    --text: #d4d4d8;
+    --text-muted: #a1a1aa;
+    --text-disabled: #63636b;
+    --inverted: #0b0b0c;
+    --focus: #fafafa;
+    --danger: #fda29b;
+    --danger-bg: #2b1513;
+    --notice-bg: #2a2010;
+    --notice-border: #5c4512;
+    --notice-text: #fedf89;
+    --shadow-pop: 0 16px 40px -8px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.04);
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --page: #0b0b0c;
+  --card: #161617;
+  --border: #2a2a2d;
+  --border-strong: #3a3a3e;
+  --control-border: #74747c;
+  --tile: #232326;
+  --tile-hover: #2e2e32;
+  --text-emphasis: #fafafa;
+  --text: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-disabled: #63636b;
+  --inverted: #0b0b0c;
+  --focus: #fafafa;
+  --danger: #fda29b;
+  --danger-bg: #2b1513;
+  --notice-bg: #2a2010;
+  --notice-border: #5c4512;
+  --notice-text: #fedf89;
+  --shadow-pop: 0 16px 40px -8px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.04);
+}

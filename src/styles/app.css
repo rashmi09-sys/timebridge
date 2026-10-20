@@ -1,0 +1,1617 @@
+/* ------------------------------------------------------------------ */
+/* Base                                                                */
+/* ------------------------------------------------------------------ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.45;
+  font-feature-settings: 'cv11', 'ss01';
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+p,
+ul,
+dl,
+dd {
+  margin: 0;
+}
+
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted {
+  color: var(--text-muted);
+  font-weight: inherit;
+}
+
+/* ------------------------------------------------------------------ */
+/* Frame: header, footer, layered popups                               */
+/* ------------------------------------------------------------------ */
+.site-header {
+  max-width: 1072px; /* 1040px card + 16px page gutter each side, so edges align */
+  margin: 0 auto;
+  padding: 20px 16px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.site-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+
+.site-brand-name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-emphasis);
+  letter-spacing: 0.005em;
+}
+
+.site-brand-sep {
+  color: var(--text-disabled);
+}
+
+.site-brand-note {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.site-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+.header-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.header-button:hover,
+.header-button[data-popup-open] {
+  background: var(--tile);
+  color: var(--text-emphasis);
+}
+
+.header-button svg {
+  color: var(--text-muted);
+}
+
+.header-icon-button {
+  width: 36px;
+  padding: 0;
+  justify-content: center;
+}
+
+/* ------------------------------------------------------------------ */
+/* Shared popup layer: theme menu, zone picker, selects, demo settings  */
+/* One surface, one item style, one stacking level, one motion.         */
+/* ------------------------------------------------------------------ */
+.layer {
+  z-index: 70; /* above the phone settings sheet, so its select popups show on top */
+  outline: 0;
+}
+
+/* Popups move in but never fade: translucent text would dip below 4.5:1 mid-animation. */
+.popup {
+  background: var(--popup-surface);
+  border: 1px solid var(--popup-border);
+  border-radius: var(--popup-radius);
+  box-shadow: var(--popup-shadow);
+  transform-origin: var(--transform-origin);
+  transition: transform var(--popup-motion);
+  outline: 0;
+}
+
+.popup[data-starting-style],
+.popup[data-ending-style] {
+  transform: scale(0.98) translateY(-2px);
+}
+
+.menu-popup {
+  min-width: 168px;
+  padding: 4px;
+}
+
+.menu-label {
+  padding: 6px 10px 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* One row style for every list of choices: icon (optional) · label · check. */
+.popup-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 14px;
+  align-items: center;
+  gap: 10px;
+  min-height: var(--popup-item-height);
+  padding: 0 var(--popup-item-padding-x);
+  border-radius: var(--popup-item-radius);
+  color: var(--text-emphasis);
+  cursor: default;
+  user-select: none;
+  outline: 0;
+}
+
+.menu-item {
+  grid-template-columns: 16px minmax(0, 1fr) 14px;
+}
+
+.popup-item[data-highlighted],
+.tz-item[data-highlighted] {
+  background: var(--tile);
+  /* The fill alone is ~1.1:1; the edge bar makes the active row unmistakable (>4.5:1). */
+  box-shadow: inset 2px 0 0 var(--text-emphasis);
+}
+
+.popup-item[data-disabled] {
+  color: var(--text-muted);
+}
+
+.menu-item-icon {
+  color: var(--text-muted);
+}
+
+.popup-item-check {
+  color: var(--text-emphasis);
+}
+
+/* Demo settings: anchored popover (desktop, tablet) or bottom sheet (phones). Same content. */
+.settings-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.settings-popover {
+  width: min(340px, calc(100vw - 24px));
+  max-height: var(--available-height);
+  overflow-y: auto;
+}
+
+.settings-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(0 0 0 / 0.32);
+}
+
+.settings-sheet {
+  position: fixed;
+  z-index: 61;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 85dvh;
+  overflow-y: auto;
+  padding: 20px 20px 24px;
+  border-width: 1px 0 0;
+  border-radius: 16px 16px 0 0;
+  /* Slides up, never fades, so text is fully opaque from the first frame. */
+  transition: transform 180ms var(--ease);
+}
+
+.settings-sheet[data-starting-style],
+.settings-sheet[data-ending-style] {
+  transform: translateY(100%);
+}
+
+.settings-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: -6px -8px -4px 0;
+}
+
+.settings-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-emphasis);
+}
+
+.settings-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.settings-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-switch-text {
+  display: grid;
+  gap: 1px;
+}
+
+.settings-hint {
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+.select-label,
+.settings-switch-label {
+  font-weight: 500;
+  color: var(--text-emphasis);
+}
+
+/* Select: trigger matches the form fields; its popup uses the shared popup layer. */
+.select-field {
+  display: grid;
+  gap: 6px;
+}
+
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text-emphasis);
+  text-align: left;
+}
+
+.select-trigger:hover {
+  border-color: var(--text-muted);
+}
+
+.select-trigger[data-popup-open] {
+  border-color: var(--text-emphasis);
+}
+
+.select-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.select-icon {
+  display: grid;
+  flex: none;
+  color: var(--text-muted);
+  transition: transform 160ms var(--ease);
+}
+
+.select-trigger[data-popup-open] .select-icon {
+  transform: rotate(180deg);
+}
+
+.select-popup {
+  min-width: var(--anchor-width);
+  max-height: var(--available-height);
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.site-footer {
+  max-width: 1072px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12.5px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Page + cards                                                        */
+/* ------------------------------------------------------------------ */
+.page {
+  display: grid;
+  place-items: start center;
+  /* Anchored to the top so the card never jumps as its content changes. */
+  padding: clamp(20px, 6vh, 64px) 16px 24px;
+}
+
+.card {
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.card-booker {
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: 284px minmax(0, 1fr) 272px;
+  height: 540px;
+}
+
+.card-details {
+  max-width: 860px;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+}
+
+.card-confirm {
+  max-width: 600px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Event meta (left column)                                            */
+/* ------------------------------------------------------------------ */
+.meta {
+  padding: 24px;
+  border-right: 1px solid var(--border);
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--text-emphasis);
+  color: var(--inverted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.meta-host {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.meta-title {
+  margin-top: 10px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: 0.005em;
+  color: var(--text-emphasis);
+}
+
+.meta-list {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  color: var(--text-emphasis);
+  font-weight: 500;
+}
+
+.meta-list > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 20px;
+}
+
+.meta-icon {
+  flex: none;
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+/* Time-zone trigger — reads as text, behaves as a button */
+.tz-trigger {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: -8px -10px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+  font-weight: 500;
+  color: var(--text-emphasis);
+  min-height: 44px;
+  max-width: calc(100% + 20px);
+}
+
+.tz-trigger:hover,
+.tz-trigger[data-popup-open] {
+  background: var(--tile);
+}
+
+.tz-trigger:focus-visible {
+  outline-offset: 0;
+}
+
+.tz-trigger-text {
+  display: grid;
+  min-width: 0;
+}
+
+/* The chevron sits on the zone name's line and centres on it. */
+.tz-trigger-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 20px;
+}
+
+.tz-trigger-city {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.tz-trigger-chevron {
+  flex: none;
+  color: var(--text-muted);
+  transition: transform 160ms var(--ease);
+}
+
+.tz-trigger[data-popup-open] .tz-trigger-chevron {
+  transform: rotate(180deg);
+}
+
+
+
+
+
+
+
+
+
+/* Host-time row — the context, as one more meta row */
+.meta-hosttime {
+  align-items: flex-start;
+}
+
+.hosttime {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.hosttime-main {
+  color: var(--text-emphasis);
+  font-weight: 500;
+  text-wrap: balance; /* "Arjun’s time is / 12h 30m ahead", never a lone "ahead" */
+}
+
+.hosttime-sub {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Clock-change line: a native disclosure, so the detail is one click (or Enter) away. */
+.change-note {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 400;
+}
+
+.change-note-summary {
+  display: inline-block;
+  min-height: 24px;
+  padding-block: 3px;
+  margin-left: -4px;
+  padding: 0 4px;
+  border-radius: 4px;
+  list-style: none;
+  cursor: pointer;
+}
+
+.change-note-summary::-webkit-details-marker {
+  display: none;
+}
+
+.change-note-summary:hover {
+  color: var(--text-emphasis);
+}
+
+.change-note .nowrap {
+  white-space: nowrap;
+}
+
+.change-note-chevron {
+  margin-left: 4px;
+  vertical-align: -1px;
+  transition: transform 160ms var(--ease);
+}
+
+.change-note[open] .change-note-chevron {
+  transform: rotate(180deg);
+}
+
+.change-note-detail {
+  margin-top: 2px;
+  max-width: 34ch;
+  line-height: 1.45;
+}
+
+.hosttime-change {
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 400;
+  max-width: 32ch;
+}
+
+/* Chosen meeting — "Your time", then "Arjun’s time" */
+.meta-chosen {
+  margin-top: 20px;
+}
+
+.tc {
+  display: grid;
+  gap: 16px;
+  text-align: left;
+}
+
+.tc-block {
+  display: grid;
+  gap: 2px;
+}
+
+.tc-block-host {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.tc-label {
+  margin-bottom: 4px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.tc-date {
+  color: var(--text-emphasis);
+  font-weight: 600;
+}
+
+.tc-time {
+  color: var(--text-emphasis);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.tc-zone,
+.tc-when {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* The host block is secondary: same structure, quieter weight. */
+.tc-block-host .tc-date,
+.tc-block-host .tc-time {
+  color: var(--text);
+  font-weight: 500;
+}
+
+.tc-block-host .tc-time {
+  font-size: 15px;
+}
+
+.tc-note {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--tile);
+  color: var(--text);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.tc-note svg {
+  margin-top: 2px;
+  color: var(--text-muted);
+}
+
+/* ------------------------------------------------------------------ */
+/* Time-zone popup (Base UI Combobox)                                  */
+/* ------------------------------------------------------------------ */
+.tz-popup {
+  width: min(360px, calc(100vw - 24px));
+  max-height: min(400px, var(--available-height));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tz-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--control-border); /* the search field's visible edge */
+  color: var(--text-muted);
+}
+
+.tz-input {
+  flex: 1;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  outline: 0;
+  color: var(--text-emphasis);
+}
+
+.tz-input::placeholder {
+  color: var(--text-muted);
+}
+
+.tz-list {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px;
+  scroll-padding: 4px;
+}
+
+.tz-list:empty {
+  padding: 0;
+}
+
+.tz-empty:empty {
+  display: none;
+}
+
+.tz-empty {
+  padding: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.tz-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  cursor: default;
+  user-select: none;
+  min-height: 44px;
+}
+
+.tz-item-main {
+  display: grid;
+  min-width: 0;
+}
+
+.tz-item-city {
+  color: var(--text-emphasis);
+  font-weight: 500;
+}
+
+.tz-item-region {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tz-item-offset {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tz-item-check {
+  color: var(--text-emphasis);
+}
+
+/* ------------------------------------------------------------------ */
+/* Calendar (middle column)                                            */
+/* ------------------------------------------------------------------ */
+.calendar {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.calendar-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-emphasis);
+}
+
+.calendar-nav {
+  display: flex;
+  gap: 2px;
+}
+
+.icon-button {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-emphasis);
+}
+
+.icon-button:hover:not(:disabled) {
+  background: var(--tile);
+}
+
+.icon-button:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.calendar-body {
+  position: relative;
+}
+
+.calendar-grid {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 4px;
+  margin: -4px;
+  width: calc(100% + 8px);
+  table-layout: fixed;
+}
+
+.calendar-grid th {
+  padding: 0 0 6px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.calendar-grid td {
+  padding: 0;
+}
+
+.day {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 64px;
+  min-height: 40px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-disabled);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  cursor: default;
+  transition:
+    background-color 120ms var(--ease),
+    border-color 120ms var(--ease),
+    color 120ms var(--ease);
+}
+
+.day[data-available] {
+  background: var(--tile);
+  color: var(--text-emphasis);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.day[data-available]:hover {
+  border-color: var(--text-emphasis);
+}
+
+.day[data-selected] {
+  background: var(--text-emphasis);
+  color: var(--inverted);
+}
+
+.day[data-today]::after {
+  content: '';
+  position: absolute;
+  bottom: 18%;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.day[data-loading] {
+  color: transparent;
+  background: var(--tile);
+  opacity: 0.6;
+}
+
+.calendar-overlay {
+  position: absolute;
+  inset: 32px 0 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  backdrop-filter: blur(1px);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+}
+
+.calendar-overlay strong {
+  color: var(--text-emphasis);
+}
+
+.calendar-status:empty {
+  display: none;
+}
+
+.calendar-status {
+  margin-top: 14px;
+  min-height: 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Slots (right column)                                                */
+/* ------------------------------------------------------------------ */
+.slots {
+  border-left: 1px solid var(--border);
+  padding: 24px 20px 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.slots-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+}
+
+.slots-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-emphasis);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.segmented-item {
+  height: 26px;
+  min-width: 36px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+.segmented-item[data-pressed] {
+  background: var(--tile);
+  color: var(--text-emphasis);
+  /* Fill and text colour alone differ by < 3:1 in dark mode; the ring makes the state ≥ 3:1. */
+  box-shadow: inset 0 0 0 1px var(--control-border);
+}
+
+.compare-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+  min-height: 24px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--control-border); /* the track is the switch's boundary: ≥ 3:1 */
+  transition: background-color 150ms var(--ease);
+}
+
+.switch[data-checked] {
+  background: var(--text-emphasis);
+}
+
+.switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.2);
+  transition: transform 150ms var(--ease);
+}
+
+.switch-thumb[data-checked] {
+  transform: translateX(14px);
+}
+
+:root[data-theme='dark'] .switch-thumb[data-checked],
+:root:not([data-theme='light']) .switch-thumb[data-checked] {
+  background: var(--inverted);
+}
+
+.notice {
+  margin-top: 14px;
+  display: flex;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--notice-bg);
+  border: 1px solid var(--notice-border);
+  color: var(--notice-text);
+  font-size: 13px;
+}
+
+.notice svg {
+  flex: none;
+  margin-top: 1px;
+}
+
+.slot-columns {
+  margin-top: 12px;
+  display: flex;
+  justify-content: space-between;
+  /* Aligns with the slot's two time columns (14px slot padding + 1px border). */
+  padding: 0 15px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.slot-columns-day {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+
+
+.slots-scroll {
+  margin-top: 14px;
+  margin-inline: -4px;
+  padding: 4px 4px 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  flex: 1;
+  min-height: 0;
+  scrollbar-width: thin;
+}
+
+.slot-list {
+  display: grid;
+  gap: 8px;
+}
+
+.slot {
+  width: 100%;
+  height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text-emphasis);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: border-color 120ms var(--ease);
+}
+
+.slot:hover {
+  border-color: var(--text-emphasis);
+}
+
+/* The time chosen earlier (after Back): a firmer edge than hover, so it reads as a state. */
+.slot[aria-current='true'] {
+  border-color: var(--text-emphasis);
+  box-shadow: inset 0 0 0 1px var(--text-emphasis);
+}
+
+.slot[data-compare] {
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  padding: 0 14px;
+}
+
+
+.slot-time {
+  text-align: center;
+}
+
+.slot[data-compare] .slot-time {
+  text-align: left;
+}
+
+/* A clock time that happens twice: the time, then a quiet line saying which occurrence. */
+.slot-label {
+  display: grid;
+  justify-items: center;
+  line-height: 1.15;
+}
+
+.slot[data-compare] .slot-label {
+  justify-items: start;
+}
+
+.slot-when {
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-weight: 500;
+}
+
+.slot-host {
+  text-align: right;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 12.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-host-day {
+  color: var(--text-muted);
+}
+
+.slot-skeleton {
+  background: var(--tile);
+  border-color: transparent;
+}
+
+.slots-empty {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding-top: 4px;
+}
+
+/* After a zone change emptied the guest's date: one line saying which date is shown instead. */
+.slots-moved,
+.slots-note {
+  margin-bottom: 10px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .slot-skeleton,
+  .day[data-loading] {
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+
+  .slot-list:not([aria-hidden]) {
+    animation: rise 180ms var(--ease);
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* Motion only, no fade: fading text in renders it below 4.5:1 contrast for
+   ~100 ms (measured: 4.03:1 at 80 ms), so the times are always fully opaque. */
+@keyframes rise {
+  from {
+    transform: translateY(3px);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Details form                                                        */
+/* ------------------------------------------------------------------ */
+.details-pane {
+  padding: 24px;
+}
+
+.form {
+  display: grid;
+  gap: 18px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
+.field label {
+  font-weight: 500;
+  color: var(--text-emphasis);
+}
+
+.field input,
+.field textarea {
+  width: 100%;
+  border: 1px solid var(--control-border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  padding: 9px 12px;
+  min-height: 40px;
+  color: var(--text-emphasis);
+  transition: border-color 120ms var(--ease);
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 84px;
+}
+
+.field input::placeholder,
+.field textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.field input:hover,
+.field textarea:hover {
+  border-color: var(--text-muted);
+}
+
+.field input:focus-visible,
+.field textarea:focus-visible {
+  outline-offset: -1px;
+  border-color: var(--text-emphasis);
+}
+
+.field input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.field-error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.button-primary {
+  background: var(--text-emphasis);
+  color: var(--inverted);
+  min-width: 112px;
+}
+
+.button-primary:hover {
+  opacity: 0.9;
+}
+
+.button-primary[data-busy] {
+  cursor: progress;
+  opacity: 0.85;
+}
+
+.button-secondary {
+  background: var(--card);
+  border-color: var(--border-strong);
+  color: var(--text-emphasis);
+}
+
+.button-secondary:hover {
+  background: var(--tile);
+}
+
+.button-ghost {
+  background: transparent;
+  color: var(--text-emphasis);
+}
+
+.button-ghost:hover {
+  background: var(--tile);
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 700ms linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Confirmation                                                        */
+/* ------------------------------------------------------------------ */
+.confirm {
+  padding: 40px 40px 32px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.confirm-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--tile);
+  color: var(--text-emphasis);
+}
+
+.confirm-title {
+  margin-top: 16px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 24px;
+  color: var(--text-emphasis);
+}
+
+.confirm-title:focus {
+  outline: none;
+}
+
+/* Focus lands here only to move the screen-reader position; it isn't a control. */
+.confirm-title:focus-visible {
+  outline: none;
+}
+
+/* Error boundary: the same card, holding a message and two ways back. */
+.card-error {
+  max-width: 480px;
+  padding: 28px;
+  display: grid;
+  gap: 12px;
+}
+
+.error-title {
+  margin: 0;
+  font-size: 20px;
+  color: var(--text-emphasis);
+}
+
+/* Like the confirmation title: focused to move the reading position, not a control. */
+.error-title:focus-visible {
+  outline: none;
+}
+
+.error-text {
+  margin: 0;
+  color: var(--text);
+}
+
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.confirm-sub {
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.confirm-rows {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 16px 20px;
+  text-align: left;
+}
+
+.confirm-rows dt {
+  color: var(--text-emphasis);
+  font-weight: 600;
+}
+
+.confirm-rows dd {
+  color: var(--text);
+}
+
+
+
+
+.pill {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: var(--tile);
+  color: var(--text-emphasis);
+  font-size: 11.5px;
+  line-height: 18px;
+  font-weight: 500;
+}
+
+.confirm-actions {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+}
+
+.link-button {
+  margin-top: 20px;
+  border: 0;
+  background: none;
+  color: var(--text-emphasis);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 500;
+  min-height: 32px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Responsive                                                          */
+/* ------------------------------------------------------------------ */
+@media (max-width: 1099px) and (min-width: 900px) {
+  .card-booker {
+    grid-template-columns: 236px minmax(0, 1fr) 276px;
+  }
+
+  .meta,
+  .calendar {
+    padding-inline: 20px;
+  }
+}
+
+@media (max-width: 899px) {
+  .page {
+    place-items: start center;
+    padding: 16px 12px 48px;
+  }
+
+  .card-booker,
+  .card-details {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+
+  .card-booker,
+  .card-details {
+    max-width: 560px;
+  }
+
+  .meta {
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+    padding: 20px;
+  }
+
+  .calendar {
+    padding: 20px 16px;
+  }
+
+  .slots {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+    max-height: none;
+    padding: 20px 16px 0;
+  }
+
+  .slots-scroll {
+    overflow: visible;
+  }
+
+  .details-pane {
+    padding: 20px;
+  }
+
+  .confirm {
+    padding: 32px 20px 24px;
+  }
+
+  .confirm-rows {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+
+  .confirm-rows dd + dt {
+    margin-top: 12px;
+  }
+
+  .confirm-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .confirm-actions > .muted {
+    grid-column: 1 / -1;
+  }
+
+  .site-header {
+    max-width: 584px; /* matches the 560px single-column card plus gutters */
+    padding: 14px 12px 0;
+    align-items: flex-start;
+  }
+
+  .site-brand {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .site-brand-sep {
+    display: none;
+  }
+
+  .site-footer {
+    max-width: 584px;
+    padding: 0 12px 32px;
+  }
+}
+
+@media (max-width: 420px) {
+  /* Icon-only on small phones; the accessible name stays "Demo settings". */
+  .header-settings {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .header-settings-label {
+    display: none;
+  }
+}
+
+@media (max-width: 380px) {
+  .calendar-grid {
+    border-spacing: 2px;
+    margin: -2px;
+    width: calc(100% + 4px);
+  }
+
+  .day {
+    min-height: 36px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .day[data-available] {
+    border-color: CanvasText;
+  }
+
+  .day[data-selected] {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .slot[aria-current='true'] {
+    border-color: Highlight;
+    box-shadow: inset 0 0 0 1px Highlight;
+  }
+}
+
+/* Confirmation: the comparison sits in the "When" row */
+.confirm-rows .tc-time {
+  font-size: 15px;
+}
