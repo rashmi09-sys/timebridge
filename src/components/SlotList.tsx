@@ -4,6 +4,7 @@ import { Toggle } from '@base-ui/react/toggle';
 import { forwardRef, useEffect, useId, useImperativeHandle, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import type { Conflict } from '../hooks/useBooker';
 import { labelHostDays, OCCURRENCE_TEXT, REPEATED_TIMES_NOTE, spokenClockTime } from '../lib/bridge';
+import { focusFromKeyboard } from '../lib/focus';
 import { clockOccurrence, formatKeyDate, formatTime, hasRepeatedTimes, spokenUtcOffset, startOfDay, weekdayAndDay, zoneGenericName } from '../lib/time';
 import type { HourCycle, LoadState, Slot } from '../types';
 import { AlertIcon } from './Icons';
@@ -70,12 +71,15 @@ export const SlotList = forwardRef<SlotListHandle, SlotListProps>(function SlotL
         ? chosenStart!
         : slots[0]?.start;
 
-  const focusStart = (start: number | undefined) => {
-    if (start != null) buttons.current.get(start)?.focus();
+  // Keyboard moves ask for the focus ring explicitly; restoring focus after Back leaves it to the browser.
+  const focusStart = (start: number | undefined, fromKeyboard = false) => {
+    const button = start != null ? buttons.current.get(start) : undefined;
+    if (fromKeyboard) focusFromKeyboard(button);
+    else button?.focus();
   };
 
   useImperativeHandle(ref, () => ({
-    focusFirst: () => requestAnimationFrame(() => focusStart(slots[0]?.start)),
+    focusFirst: () => requestAnimationFrame(() => focusStart(slots[0]?.start, true)),
     focusSlot: (start: number) => requestAnimationFrame(() => focusStart(inList(start) ? start : slots[0]?.start)),
     scrollIntoView: (options) => titleRef.current?.scrollIntoView(options),
   }));
@@ -89,7 +93,7 @@ export const SlotList = forwardRef<SlotListHandle, SlotListProps>(function SlotL
     const next: Record<string, number> = { ArrowDown: i + 1, ArrowUp: i - 1, Home: 0, End: slots.length - 1 };
     if (e.key in next) {
       e.preventDefault();
-      focusStart(slots[Math.max(0, Math.min(next[e.key], slots.length - 1))]?.start);
+      focusStart(slots[Math.max(0, Math.min(next[e.key], slots.length - 1))]?.start, true);
     }
   }
 
@@ -164,7 +168,8 @@ export const SlotList = forwardRef<SlotListHandle, SlotListProps>(function SlotL
         </div>
       )}
 
-      <div className="slots-scroll">
+      {/* tabIndex -1: Firefox otherwise adds the scrolling box as an extra, unnamed tab stop before the times. */}
+      <div className="slots-scroll" tabIndex={-1}>
         {load === 'loading' && (
           <ul className="slot-list" aria-hidden="true">
             {Array.from({ length: 6 }, (_, i) => (

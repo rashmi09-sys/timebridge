@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import type { Booker } from '../hooks/useBooker';
+import { focusFromKeyboard } from '../lib/focus';
 import { EVENT } from '../lib/simulatedBookingService';
 import { addDaysToKey, formatKeyDate, getFormatLocale, monthYearParts, parseKey, weekdayNames, weekdayOfKey } from '../lib/time';
 import { AlertIcon, ChevronLeftIcon, ChevronRightIcon } from './Icons';
@@ -52,7 +53,7 @@ export function MonthCalendar(props: {
     if (!target || !target.startsWith(monthPrefix)) return;
     pendingFocus.current = null;
     setFocusKey(target);
-    requestAnimationFrame(() => gridRef.current?.querySelector<HTMLButtonElement>(`[data-key="${target}"]`)?.focus());
+    requestAnimationFrame(() => focusFromKeyboard(gridRef.current?.querySelector<HTMLButtonElement>(`[data-key="${target}"]`)));
   }, [monthPrefix]);
 
   const weeks = useMemo(() => {
@@ -69,7 +70,7 @@ export function MonthCalendar(props: {
   function moveFocus(target: string) {
     if (target.startsWith(monthPrefix)) {
       setFocusKey(target);
-      gridRef.current?.querySelector<HTMLButtonElement>(`[data-key="${target}"]`)?.focus();
+      focusFromKeyboard(gridRef.current?.querySelector<HTMLButtonElement>(`[data-key="${target}"]`));
       return;
     }
     const delta = target < monthPrefix ? -1 : 1;

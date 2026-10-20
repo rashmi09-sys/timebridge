@@ -85,7 +85,11 @@ async function chooseGuestPreset(page: Page, option: string) {
   await expect(panel).toBeVisible();
   await settled(page);
   await page.getByRole('combobox', { name: 'Guest timezone' }).click();
-  await page.waitForFunction(() => document.querySelector('.select-popup')?.getAnimations().length === 0);
+  // Settled means the entry motion has finished, not just "no running animations" (WebKit reports none the frame before it starts).
+  await page.waitForFunction(() => {
+    const el = document.querySelector('.select-popup');
+    return !!el && !el.hasAttribute('data-starting-style') && el.getAnimations().length === 0 && getComputedStyle(el).transform === 'none';
+  });
   await page.getByRole('option', { name: option, exact: true }).click();
   await expect(page.getByRole('listbox')).toHaveCount(0);
   await page.keyboard.press('Escape');
