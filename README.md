@@ -95,24 +95,27 @@ npm run test:e2e:chromium    # Chromium only
 npm run build
 ```
 
-**Last verified run** (Playwright 1.56, Chromium 141, Node 22, Linux container, 2026-10-18):
+**Last verified run:** [GitHub Actions run 39378723227](https://github.com/rashmi09-sys/timebridge/actions/runs/39378723227), 2026-10-20, on `ubuntu-latest` with Node 22 and Playwright 1.56 (Chromium 141, Firefox 142, WebKit 26).
 
 | Check | Result |
 |---|---|
-| Typecheck, lint, production build | Pass |
-| Unit tests | 184 passed, 0 failed |
-| desktop-chromium | 103 passed, 0 failed, 1 skipped |
-| mobile-chromium (Pixel 7) | 84 passed, 0 failed, 20 skipped |
-| desktop-firefox, desktop-webkit, mobile-webkit (iPhone 13) | **Not run**: those browsers couldn't be installed in that environment |
+| Typecheck, lint, unit tests, production build | Pass (184 unit tests; count from a local run of the same code) |
+| desktop-chromium | 104 passed, 0 failed, 1 skipped |
+| desktop-firefox | 104 passed, 0 failed, 1 skipped |
+| desktop-webkit | 104 passed, 0 failed, 1 skipped |
+| mobile-chromium (Pixel 7, emulated) | 84 passed, 0 failed, 21 skipped |
+| mobile-webkit (iPhone 13, emulated) | 84 passed, 0 failed, 21 skipped |
 | `npm audit` | 0 vulnerabilities |
-| GitHub Actions | Not yet run (the repository isn't published) |
 
-Skips are deliberate: keyboard and fixed-width tests run on desktop, and phone-only tests on phones. The CI workflow runs all five projects, so its first run will be the first real Firefox and WebKit result.
+Skips are deliberate: keyboard and fixed-width tests run on desktop, and phone-only tests on phones. No tests were retried.
+
+These are Playwright's own Linux builds of each engine. WebKit on Linux is not Safari on a Mac or an iPhone, and the phone projects emulate screen size and touch; they are not real devices.
 
 ## Limitations
 
 - **Simulated.** One fictional host, Arjun Mehta in Bengaluru (Mon–Fri 9:00–17:00, 15-minute meetings, 2-hour notice, 60-day window). Yuki Tanaka in Tokyo appears only as placeholder text. Nothing is booked, sent or stored.
-- **Not verified:** screen readers by ear, real phones, Windows High Contrast, Firefox and WebKit.
+- **Not verified:** screen readers by ear, real phones, Windows High Contrast, and the shipping browsers themselves (Safari, Chrome and Firefox on macOS, Windows, iOS and Android). Automated tests cover Playwright's Chromium, Firefox and WebKit builds only.
+- **Focus ring in older Safari.** Keyboard moves in the calendar and time list call `focus({ focusVisible: true })`, supported from Safari 18.4, Firefox 104 and Chrome 145. Safari before 18.4 ignores it, so after a mouse click, arrowing through dates or times there may show no focus ring. Chrome before 145 shows the ring through its own rules (tested in Chromium 141).
 - **Interface copy is English only.** Dates and times follow the browser's locale; sentences and zone names don't, and weeks start on Sunday everywhere.
 - **No user research.** Whether guests actually hesitate without this context is the open question.
 
