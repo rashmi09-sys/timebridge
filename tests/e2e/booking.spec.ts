@@ -1401,6 +1401,8 @@ test.describe('site frame and controls', () => {
     await trigger.focus();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('menuitemradio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+    // The menu takes keys once focus is on its item (WebKit can move it a frame after opening).
+    await expect(page.getByRole('menuitemradio', { name: 'System' })).toBeFocused();
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
